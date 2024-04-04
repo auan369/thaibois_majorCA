@@ -15,3 +15,6 @@
 # Ignore system files
 Thumbs.db
 .DS_Store
+
+# Ignore test files
+test.c
