@@ -3,7 +3,7 @@
 
 // TODO
 
-int main(int argc, char const *argv[]){
+int user_input(int argc, char const *argv[]){
 
     exit();
 }

@@ -45,7 +45,8 @@ int badr[5];			// PCI 2.2 assigns 6 IO base addresses
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-int main() {
+int port_output(float data) {
+	printf("Value: %.5f\n", data);
 // struct pci_dev_info info;
 // void *hdl;
 
