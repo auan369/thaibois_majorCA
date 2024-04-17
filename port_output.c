@@ -13,7 +13,7 @@
 // #include <sys/neutrino.h>
 // #include <sys/mman.h>
 #include <math.h>
-#include<windows.h>
+// #include<windows.h>
 																
 #define	INTERRUPT	iobase[1] + 0		// Badr1 + 0 : also ADC register
 #define	MUXCHAN		iobase[1] + 2		// Badr1 + 2

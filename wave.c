@@ -4,21 +4,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <windows.h>
+#include <unistd.h>
+// #include <windows.h>
 #include <pthread.h>
 // include port_output.c
 #include "port_output.c"
-#include "user_input.c"
+// #include "user_input.c"
 
 #define SINE_WAVE       0
 #define SQUARE_WAVE     1
 #define TRIANGLE_WAVE   2
 #define SAWTOOTH_WAVE   3
 
-int waveform; // type of wave
-int steps;    // resultion of wave
-float M_PI = 3.14159265358979323846;
+// int waveform; // type of wave
+// int steps;    // resultion of wave
+// float M_PI = 3.14159265358979323846;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_t th[2];
+int i;
+float data;
+//set default values
+int waveform = SINE_WAVE;
+int steps = 100;
 
 float sineWave(int index){ // return sine wave from 0 to 2
   float delta;
@@ -78,20 +85,6 @@ float genWave(int index, int waveform){
 
 }
 
-void* printOut( void* arg )
-{
-    while( 1 ) {
-        pthread_mutex_lock( &mutex );
-        tmp = count++;
-        pthread_mutex_unlock( &mutex );
-        printf( "Count is %d\n", tmp );
-
-        /* snooze for 1 second */
-        sleep( 1 );
-    }
-
-    return 0;
-}
 
 void* function1( void* arg )
 {
@@ -104,53 +97,36 @@ void* function1( void* arg )
     else{
       i = 0;
       data = genWave(i++, waveform);
-    }  
+    }
     pthread_mutex_unlock( &mutex );
+    sleep( 0.001 ); //sleep for 1ms, allows next thread to run
   }
-  return 0;
+  // return 0;
 }
 
-void* function1( void* arg )
+void* function2( void* arg )
 {
   while( 1 ) {
     pthread_mutex_lock( &mutex );
-    // TODO: SEND TO output.c VIA MESSAGING
-    printf("Index: %.2d;", i);
-    port_output(data);  
+    
+    printf("%.5f\n", data);
+    //! Need to update with code for DAC
     pthread_mutex_unlock( &mutex );
+    sleep( 0.001 ); //sleep for 1ms, allows next thread to run
   }
-  return 0;
+
 }
 
 
-int i;
-float data;
-
-//set default values
-waveform = SINE_WAVE;
-steps = 100;
 
 
-int main(){
+
+int main( void ){
   
+  pthread_create( &th[0], NULL, &function1, NULL );
+  pthread_create( &th[1], NULL, &function2, NULL );
+  pthread_join(th[0], NULL); // wait for the thread 0 to exit first (never happens)
+  pthread_join(th[1], NULL); // wait for the thread 1 to exit first (never happens)
 
-
-  // while(1){
-  //   // TODO : RECEIVE MESSAGE FROM input.c FOR USER SETTINGS
-
-  //   for (i=0; i<steps; i++){
-  //     data = genWave(i, waveform);
-  //     // printf("Index: %.2d; Value: %.5f\n", i, data);
-      
-
-  //     // TODO: SEND TO output.c VIA MESSAGING
-  //     printf("Index: %.2d;", i);
-  //     port_output(data);
-  //   }
-  // }
-  // user_input(0, NULL);
-  pthread_create( NULL, NULL, &function1, NULL );
-  pthread_create( NULL, NULL, &function2, NULL );
-
-  exit(0);
+  return 0;
 }
