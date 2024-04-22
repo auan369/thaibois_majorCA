@@ -71,10 +71,10 @@ int frequency = 1;
 char filename[20];
 
 
-void parse_arg(int argc, char const *argv[], int *wave, int *freq, char *filename){
+void parse_arg(int argc, char const *argv[], int *wave, int *freq, char file[]){
 
 	for (i=1;i<argc; i++){
-		if (strcmp(argv[i], "-w")==0){
+		if (strcmp(argv[i], "-w")==0){ //waveform flag
 			i++;
 			if (strcmp(argv[i], "sine") == 0) *wave=SINE_WAVE;
 			else if (strcmp(argv[i], "square") == 0) *wave=SQUARE_WAVE;
@@ -86,15 +86,15 @@ void parse_arg(int argc, char const *argv[], int *wave, int *freq, char *filenam
 				} 
 		}
 		
-		if (strcmp(argv[i], "-f")==0){
+		if (strcmp(argv[i], "-f")==0){ //frequency flag
 			i++;
 			*freq = atoi(argv[i]);
 		
 		}
 		
-		if (strcmp(argv[i], "-file")==0){
-			i++;
-			readFile(argv[i]);
+		if (strcmp(argv[i], "-file")==0){ //file flag
+			i++; 
+			strcpy(file, argv[i]);
 		}
 
 	}
@@ -105,8 +105,9 @@ void parse_arg(int argc, char const *argv[], int *wave, int *freq, char *filenam
 
 
 
-void readFile(char[] filename){
-	FILE *file = fopen(filename, "r");
+void readFile(char filename[]){
+
+	FILE *file = fopen(filename, "r"); // can add missing file check here
 	printf("\nreadfile\n");
 
 	if(file != NULL){
@@ -121,7 +122,8 @@ void readFile(char[] filename){
 }
 
 void writeFile(){
-	FILE *file = fopen("settings.txt", "w");
+
+	FILE *file = fopen("settings.txt", "w");
 	printf("\nWritefile\n");
 
 	if(file != NULL){
@@ -134,7 +136,7 @@ void writeFile(){
 		fclose(file); }
 }
 
-
+// ------------------------- Define wave functions ------------------------------------------------
 float sineWave(int index){ // return sine wave from 0 to 2
   float delta;
   delta = (2.0 * M_PI) / (float) steps;
@@ -168,6 +170,7 @@ float sawtoothWave(int index){
   return index * delta;
 }
 
+// ----------------------------------------- Generate the data point for the wave for a given index -----------------------------
 
 float genWave(int index, int waveform){
   switch  (waveform){
@@ -192,6 +195,7 @@ float genWave(int index, int waveform){
   }
 
 }
+//----------------------------------- Define Threads ------------------------------------------
 
 
 void* function1( void* arg )
@@ -217,14 +221,16 @@ void* audio_thread( void* arg )
   while( 1 ) {
   	//printf("Audio thread\n");
     //pthread_mutex_lock( &mutex );
-    printf("\a"); // Auditory cue;
+    printf("\a"); // Auditory cue
+;
     //pthread_mutex_unlock( &mutex );
     usleep( 1000000/frequency); // Wait for the beat rate//sleep for 1ms, allows next thread to run
   }
 
 }
 
-void *input_thread(void *arg) {
+// thread to take in input from terminal
+void *input_thread(void *arg) {
     char input[10];
     char c;
     int num;
@@ -274,7 +280,7 @@ void* audio_thread( void* arg )
                 		writeFile();
                 		break;
               	 	case 'T':
-					case 't':
+					        case 't':
                 		waveform = TRIANGLE_WAVE;
                 		writeFile();
                 		break;
@@ -301,7 +307,8 @@ void *visual_thread(void *arg) {
     while (1) {
         // Visual cue
         pthread_mutex_lock(&mutex);
-        printf("\rBLINK");	
+        printf("\rBLINK");
+	
         fflush(stdout);
         pthread_mutex_unlock(&mutex);
         usleep( 1000000/(frequency*2)); // Half the beat rate for synchronization
@@ -323,12 +330,6 @@ void *visual_thread(void *arg) {
 //!----------Main Function----------!
 int main(int argc, char const *argv[]){
 
-// parse command line arg
-
-
-
-//read_settings(&settings);
-//frequency = settings.frequency;
 
 struct pci_dev_info info;
 void *hdl;
@@ -389,7 +390,7 @@ if(ThreadCtl(_NTO_TCTL_IO,0)==-1) {
 
 parse_arg(argc, argv, &waveform, &frequency);
 
-
+// generate the data points for the 4 waveforms
 for (j=0;j<4;j++){
 	for(i=0;i<50;i++) {
 
@@ -397,9 +398,10 @@ for (j=0;j<4;j++){
  	data1[j][i]= (unsigned) dummy;			// add offset +  scale
  	//printf("%f\n", dummy);
  }
-}
+
+}
   
-  //readFile();
+  readFile(filename);
   
   
   //pthread_create( &th[0], NULL, &function1, NULL );
