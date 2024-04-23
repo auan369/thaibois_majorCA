@@ -109,6 +109,7 @@ int parse_arg(int argc, char const *argv[], int *wave, int *freq, char file[], c
 			i++; 
 			strcpy(file, argv[i]);
 			file_exist = 1;
+			//printf(file);
 		}
 		
 		else if (strcmp(argv[i], "-outfile")==0){//output file flag
@@ -164,7 +165,9 @@ void writeFile(char filename[]){
 		
 		fprintf(file, "%d\n", frequency);
 		// printf("%d\n",frequency);
-		
+
+
+			
 		fclose(file); }
 }
 
@@ -310,12 +313,11 @@ void *input_thread(void *arg) {
     while (1) {
   	  
   	  //printf("input thread\n");
-  	  
   	   if (scanf("%s", input)==1){
        //printf("input: %s\n", input);
        	if (sscanf(input, "%d", &num) ==1) {
        		pthread_mutex_lock( &mutex );
-       		//printf("\nthe value here is: %d\n", num);
+       		printf("\nInput Frequency: %d\n", num);
        		if (num > 0){
        			frequency=num;
        		}
@@ -330,7 +332,7 @@ void *input_thread(void *arg) {
        		//printf("not a number");
        		if (sscanf(input, "%c", &c) ==1) {
        			pthread_mutex_lock( &mutex );
-       			printf("the char here is: %c\n", c);
+       			printf("Input Char is: %c\n", c);
        			 switch (c) {
             		case '+':
               	  		frequency += 1;
@@ -368,6 +370,7 @@ void *input_thread(void *arg) {
                 		//writeFile();
                 		break;
             		default:
+            			printf("Invalid char input. Please put only 'S or s', 'W or w', 'Q or q', 'T or t', 'E or e' as inputs\n");
                 		break;
         		}
         		writeFile(out_filename);
@@ -471,6 +474,7 @@ if(ThreadCtl(_NTO_TCTL_IO,0)==-1) {
 
 //delta=(2.0*3.142)/50.0;					// increment
 
+printf("\n");
 
 
 //-------------------------------------------------------------parse arg------------------------------------------------------
@@ -478,7 +482,7 @@ if (parse_arg(argc, argv, &waveform, &frequency, filename, out_filename)) exit(1
  // exit program if parse arg fails
 if (!outfile_exist) printf("No output file given. Saving settings to default output file new_settings.txt\n" );
 
-writeFile(out_filename);
+
 
 
 
@@ -497,6 +501,7 @@ for (j=0;j<5;j++){
   if (file_exist) readFile(filename);
  // it will priorities file settings over command line settings
   
+writeFile(out_filename);
 
   print_wave_settings();
  
