@@ -1,6 +1,6 @@
 // This program generates the standard wave function of one period, with values from 0 to 2 (amplitude = 1 and offset = 1) --> values from 0 to 2
 
-
+// import libraries
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -12,6 +12,7 @@
 #include <sys/mman.h>
 #include <math.h>
 
+// define the PCI-DAS 1602 I/O addresses
 #define	INTERRUPT		  	iobase[1] + 0				// Badr1 + 0 : also ADC register
 #define	MUXCHAN			  	iobase[1] + 2				// Badr1 + 2
 #define	TRIGGER			  	iobase[1] + 4				// Badr1 + 4
@@ -42,25 +43,17 @@ int badr[5];															// PCI 2.2 assigns 6 IO base addresses
 
 
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// define the waveform types using macros
 	
 
-#define SINE_WAVE       0
-#define SQUARE_WAVE     1
-#define TRIANGLE_WAVE   2
-#define SAWTOOTH_WAVE   3
-# define SINESAWTOOTH_WAVE 4
+#define SINE_WAVE       	0
+#define SQUARE_WAVE     	1
+#define TRIANGLE_WAVE   	2
+#define SAWTOOTH_WAVE   	3
+#define SINESAWTOOTH_WAVE 	4
 
 
-// Structure to hold settings
-//struct Settings {
-//    float frequency = 1.0;
-//};
-
-// Default settings
-//struct Settings default_settings = {1.0};
-//struct Settings settings;
-
+// declar global variables
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_t th[4];
 int i;
@@ -199,7 +192,7 @@ float sineWave(int index){ // return sine wave from 0 to 2
 
 float squareWave(int index){
   if (index < (steps / 2)){
-    return 1.999; // high
+    return 1.999; // high // 1.999 to avoid rounding error
   }
 
   else{
@@ -220,12 +213,12 @@ float triangleWave(int index){
 
 float sawtoothWave(int index){
   float delta;
-  delta = 2.0 / steps;
+  delta = 1.999 / steps;
   return index * delta;
 }
 
-float sineSawtoothWave(int index){
-	return (sineWave(index) + sawtoothWave(index)) /2;
+float sineSawtoothWave(int index){ // return the superposition of sine and sawtooth wave
+	return (sineWave(index) + sawtoothWave(index)) /2; // divide by 2 to normalize the amplitude
 	
 }
 
@@ -260,7 +253,8 @@ float genWave(int index, int waveform){
 }
 
 //------------------------------------------- Define Threads ------------------------------------------
-void* audio_thread( void* arg )
+// audio thread to generate the sound at the wave frequency
+void* audio_thread( void* arg ) 
 {
   while( 1 ) {
     pthread_mutex_lock(&mutex);
@@ -270,6 +264,7 @@ void* audio_thread( void* arg )
   }
 }
 
+// input thread to change the wave settings interactively from the terminal via keyboard
 void *input_thread(void *arg) {
     char input[10];
     char c;
@@ -338,6 +333,7 @@ void *input_thread(void *arg) {
     return NULL;
 }
 
+// visual thread to generate the visual cue at the wave frequency on the terminal
 void *visual_thread(void *arg) {
     while (1) {
         // Visual cue
@@ -355,7 +351,7 @@ void *visual_thread(void *arg) {
     return NULL;
 }
 
-//!--------------------------------------------------Main Function--------------------------------------------------!
+//!--------------------------------------------------Main Function/thread--------------------------------------------------!
 int main(int argc, char const *argv[]){
 
 	//----------------------declaration----------------------
@@ -370,6 +366,8 @@ int main(int argc, char const *argv[]){
 	float delta,dummy;
 
 	printf("\fDemonstration Routine for PCI-DAS 1602\n\n");
+
+	// pci setup
 
 	memset(&info,0,sizeof(info));
 	if(pci_attach(0)<0) {
@@ -410,8 +408,9 @@ int main(int argc, char const *argv[]){
 
 	//-------------------------------------------------------------parse arg------------------------------------------------------
 	if (parse_arg(argc, argv, &waveform, &frequency, filename, out_filename)) exit(1);
-
 	// exit program if parse arg fails
+
+	// check of output file is given command line
 	if (!outfile_exist) printf("No output file given. Saving settings to default output file new_settings.txt\n" );
 
 	// generate the data points for the 4 waveforms
@@ -423,15 +422,22 @@ int main(int argc, char const *argv[]){
 		}
 	}
 	
+	// check if input file exist and read file
 	if (file_exist) readFile(filename);
 	// it will priorities file settings over command line settings
-		writeFile(out_filename);
-		print_wave_settings();
-		//pthread_create( &th[0], NULL, &function1, NULL );
-		pthread_create( &th[1], NULL, &visual_thread, NULL );
-		pthread_create( &th[2], NULL, &audio_thread, NULL );
-		pthread_create( &th[3], NULL, &input_thread, NULL );
-	
+
+	// write the settings to the output file (update the settings)
+	writeFile(out_filename);
+
+	// print the wave settings to the terminal (waveform and frequency)
+	print_wave_settings();
+
+	// create the threads
+	pthread_create( &th[1], NULL, &visual_thread, NULL );
+	pthread_create( &th[2], NULL, &audio_thread, NULL );
+	pthread_create( &th[3], NULL, &input_thread, NULL );
+
+	// output the wave to the DAQ
 	while(1) {
 	//printf("Main thread\n");
 		for(i=0;i<50;i++) {
@@ -447,11 +453,3 @@ int main(int argc, char const *argv[]){
 	
 	return 0;
 }
-#/** PhEDIT attribute block
-#-11:16777215
-#0:5786:default:-3:-3:0
-#5786:6420:default:-3:-3:4
-#6420:6686:TextFont9:-3:-3:4
-#6686:6828:default:-3:-3:4
-#6828:10497:default:-3:-3:0
-#**  PhEDIT attribute block ends (-0000224)**/
