@@ -404,7 +404,7 @@ int main(int argc, char const *argv[]){
 		perror("Thread Control");
 		exit(1);
 	}
-	printf("\n")
+	printf("\n");
 
 	//-------------------------------------------------------------parse arg------------------------------------------------------
 	if (parse_arg(argc, argv, &waveform, &frequency, filename, out_filename)) exit(1);
